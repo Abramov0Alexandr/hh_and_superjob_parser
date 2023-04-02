@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "hh-and-superjob-parser"
+version = "0.1.0"
+description = ""
+authors = ["Alexandr Abramov <alexandr.abramovvv@yandex.ru>"]
+readme = "README.md"
+packages = [{include = "hh_and_superjob_parser"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[tool.poetry.group.dev.dependencies]
+requests = "^2.28.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
