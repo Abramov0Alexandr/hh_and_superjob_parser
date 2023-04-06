@@ -65,8 +65,6 @@ class HHVacancyInterface:
             self.__hh_instance.error_logs.append(e)
             return e
 
-    def vacancy_title(self):
-        pass
 
     @property
     def show_vacancies(self):
@@ -91,6 +89,9 @@ class HHVacancyInterface:
 
         test = self.__list_of_vacancies[:-1]
         result_data = []
+
+        if len(self.__list_of_vacancies) == 0:
+            return 'Список вакансий пуст, чтобы заполнить его, воспользуйтесь методом "fill_vacancy_list"'
 
         for i in test:
             vacancy_dict = {}
@@ -118,31 +119,43 @@ class HHVacancyInterface:
             if i['salary']['from'] is None:
                 i['salary']['from'] = "Начальная з/п не указана"
 
-            if i['id'] == str(id):
+            if str(id) == i['id']:
                 if i['address'] is None:
 
                     result_info.append(f"Наименование вакансии: {i['name']}. "
                                        f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}. "
                                        f"Требования к кандидату: {i['snippet']['requirement']} "
-                                       f"Обязанности: {i['snippet']['responsibility']}")
+                                       f"Обязанности: {i['snippet']['responsibility']} "
+                                       f"Ссылка на вакансию: {i['alternate_url']}.")
 
                 else:
                     result_info.append(f"Наименование вакансии: {i['name']}. "
                                        f"Заработная плата({i['salary']['currency']}): {i['salary']['to']} - {i['salary']['from']}. "
                                        f"Адрес офиса: {i['address']['city']} {i['address']['street']} {i['address']['building']}. "
                                        f"Требования к кандидату: {i['snippet']['requirement']} "
-                                       f"Обязанности: {i['snippet']['responsibility']}")
+                                       f"Обязанности: {i['snippet']['responsibility']} "
+                                       f"Ссылка на вакансию: {i['alternate_url']}.")
 
         return result_info
 
 
-hh_api_instance = HeadHunterApi("Python разработчик")
+#: Создаем экземпляр класса АПИ. Можем через запятую передать ключевые слова в вакансии
+hh_api_instance = HeadHunterApi("python, Python разработчик")
+
+#: Создаем интерфейс для работы со списком полученных вакансий
 hh_vacancy_interface = HHVacancyInterface(hh_api_instance)
 
+#: Заполняем список вакансий полученной информацией
+hh_vacancy_interface.fill_vacancy_list()
 
 
+#: Можно получить список вакансий либо в виде списка, либо в виде словаря
+# print(hh_vacancy_interface.dict_of_vacancies)
+# print(hh_vacancy_interface.list_of_vacancies)
 
+#: Также можно вывести краткую информацию по всем полученным вакансиям
+# print(hh_vacancy_interface.show_vacancies)
 
-
-
+#: Можно получить более подробную информацию по конкретной вакансии
+# print(hh_vacancy_interface.get_full_information_by_id(78431357))
 
