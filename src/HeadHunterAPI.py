@@ -5,36 +5,40 @@ from AbstractCLS import ParseCLS
 
 class HeadHunterApi(ParseCLS):
 
-    base_url = "https://api.hh.ru/vacancies?only_with_salary=true"
+    __base_url = "https://api.hh.ru/vacancies?only_with_salary=true"
 
-    __slots__ = ("error_logs", "params", "response", "vacancies_list")
+    __slots__ = ("__error_logs", "__params", "__response", "__vacancies_list")
 
     def __init__(self, *args):
-        self.error_logs = []
+        self.__error_logs = []
 
-        self.params = {"text": args[:],
+        self.__params = {"text": args[:],
                        "page": 1,
                        "per_page": 20
                        }
 
-        self.response = requests.get(url=self.base_url, params=self.params)
-        if self.response.status_code == 200:
-            self.vacancies_list = self.response.json()["items"]
+        self.__response = requests.get(url=self.__base_url, params=self.__params)
+        if self.__response.status_code == 200:
+            self.__vacancies_list = self.__response.json()["items"]
         else:
-            self.error_logs.append(self.response.status_code)
-            print("Error: %s" % self.response.status_code)
+            self.__error_logs.append(self.__response.status_code)
+            print("Error: %s" % self.__response.status_code)
 
     def generate_vacancy(self):
         try:
-            return self.vacancies_list
+            return self.__vacancies_list
         except AttributeError as e:
             return e
+
+    @property
+    def error_logs(self):
+        return self.__error_logs
 
 
 class HHVacancyInterface:
 
     def __init__(self, hh_instance: HeadHunterApi):
-        self.hh_instance = hh_instance
+        self.__hh_instance = hh_instance
         self.__list_of_vacancies = []
 
         self.__now = datetime.datetime.now()
@@ -43,7 +47,7 @@ class HHVacancyInterface:
     def fill_vacancy_list(self):
 
         try:
-            for i in self.hh_instance.generate_vacancy():
+            for i in self.__hh_instance.generate_vacancy():
                 if i['salary']['to'] is None:
                     i['salary']['to'] = "Максимальный порог не указан"
 
@@ -57,7 +61,7 @@ class HHVacancyInterface:
             self.__list_of_vacancies.append(f"Время формирования запроса: {self.__current_time}")
 
         except TypeError as e:
-            self.hh_instance.error_logs.append(e)
+            self.__hh_instance.error_logs.append(e)
             return e
 
     def vacancy_title(self):
@@ -66,14 +70,13 @@ class HHVacancyInterface:
     @property
     def show_vacancies(self):
 
-        if len(self.__list_of_vacancies) != 0:
-            return '\n'.join([i for i in self.__list_of_vacancies])
-
-        if len(self.hh_instance.error_logs) != 0:
-            return f"{'Список задокументированных ошибок:'} {self.hh_instance.error_logs}"
-
-        elif len(self.__list_of_vacancies) == 0 and len(self.hh_instance.error_logs) == 0:
+        if len(self.__list_of_vacancies) == 0 and len(self.__hh_instance.error_logs) == 0:
             return 'Список вакансий пуст, чтобы заполнить его, воспользуйтесь методом "fill_vacancy_list"'
+
+        if len(self.__hh_instance.error_logs) != 0:
+            return f"{'Список задокументированных ошибок:'} {self.__hh_instance.error_logs}"
+
+        return '\n'.join([i for i in self.__list_of_vacancies])
 
     @property
     def list_of_vacancies(self):
@@ -81,6 +84,23 @@ class HHVacancyInterface:
             return 'Список вакансий пуст, чтобы заполнить его, воспользуйтесь методом "fill_vacancy_list"'
 
         return self.__list_of_vacancies[:-1]
+
+    @property
+    def dict_of_vacancies(self):
+
+        test = self.__list_of_vacancies[:-1]
+        result_data = []
+
+        for i in test:
+            vacancy_dict = {}
+            part_of_dict = i.split('. ')
+
+            for part in part_of_dict:
+                key_value = part.split(': ')
+                vacancy_dict[key_value[0]] =key_value[1]
+            result_data.append(vacancy_dict)
+
+        return result_data
 
 
 
@@ -90,11 +110,8 @@ hh_vacancy_interface = HHVacancyInterface(hh_api_instance)
 
 
 hh_vacancy_interface.fill_vacancy_list()
-# print()
-print(hh_vacancy_interface.show_vacancies)
-# print(hh_vacancy_interface.list_of_vacancies)
-# print(hh_api_instance.vacancies_list[0])
-print()
+hh_vacancy_interface.
+
 
 
 
