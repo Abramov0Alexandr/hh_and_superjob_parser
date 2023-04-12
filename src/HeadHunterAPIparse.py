@@ -10,6 +10,8 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
 
     __base_url = "https://api.hh.ru/vacancies?only_with_salary=true"
 
+    __slots__ = ['vacancies_list']
+
     def __init__(self):
         self.__vacancies_list = []
 
@@ -72,15 +74,13 @@ class HeadHunterVacancyInterface:
             vacancies = json.load(file)
 
         for i in vacancies:
-            if i['salary']['to'] is None:
-                i['salary']['to'] = "Максимальный порог не указан"
 
-            if i['salary']['from'] is None:
-                i['salary']['from'] = "Начальная з/п не указана"
+            salary_from = 'Начальная плата не указана' if not i['salary'].get('from') else i['salary'].get('from')
+            salary_to = 'Максимальный порог не указан' if not i['salary'].get('to') else i['salary'].get('to')
 
             result_info.append(f"ID вакансии: {i['id']}. "
                                f"Наименование вакансии: {i['name']}. "
-                               f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}. "
+                               f"Заработная плата({i['salary']['currency']}): {salary_from} - {salary_to}. "                               
                                f"Ссылка на вакансию: {i['alternate_url']}.")
 
         return '\n'.join(result_info)
@@ -109,3 +109,12 @@ class HeadHunterVacancyInterface:
 
                     return '\n'.join(result_info)
         return 'Вакансии по такому ID не найдено'
+
+
+hh_api = HeadHunterAPI()
+hh_api.start_parse('python', 1)
+vac = hh_api.get_vacancies_list
+hh_vacancy = HeadHunterVacancyInterface('test')
+# hh_vacancy.create_json_array(vac)
+# print(hh_vacancy.show_all_vacancies())
+print(hh_vacancy.get_full_information_by_id(75845620))
