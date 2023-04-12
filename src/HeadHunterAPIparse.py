@@ -1,139 +1,111 @@
+import json
+import os
 import requests
 import datetime
-from src.AbstractCLS import ParseCLS
+
+from src.AbstractCLS import HeadHunterAPIAbstract
 
 
-class HeadHunterApi(ParseCLS):
+class HeadHunterAPI(HeadHunterAPIAbstract):
 
     __base_url = "https://api.hh.ru/vacancies?only_with_salary=true"
 
-    __slots__ = ("__error_logs", "__params", "__response", "__vacancies_list")
+    def __init__(self):
+        self.__vacancies_list = []
 
-    def __init__(self, *args):
-        self.__error_logs = []
+    def __get_request(self, search_vacancy: str, page: int) -> list:
 
-        self.__params = {"text": args[:],
-                         "page": 1,
-                         "per_page": 20
-                         }
+        params = {"text": search_vacancy,
+                  "page": page,
+                  "per_page": 100
+                  }
+        return requests.get(self.__base_url, params=params).json()['items']
 
-        self.__response = requests.get(url=self.__base_url, params=self.__params)
-        if self.__response.status_code == 200:
-            self.__vacancies_list = self.__response.json()["items"]
+    def start_parse(self, keyword: str, pages=10) -> None:
+        current_page = 0
+        now = datetime.datetime.now()
+        current_time = now.strftime(f"%d.%m.%Y Время: %X")
+
+        for i in range(pages):
+            current_page += 1
+            print(f"Парсинг страницы {i + 1}", end=': ')
+            values = self.__get_request(keyword, i)
+            print(f"Найдено {len(values)} вакансий")
+            self.__vacancies_list.extend(values)
+
+        print(f"Парсинг окончен, собрано {len(self.__vacancies_list)} вакансий с {current_page} страниц\n"
+              f"Информация собрана {current_time}\n")
+
+    @property
+    def get_vacancies_list(self):
+        return self.__vacancies_list
+
+
+class HeadHunterVacancyInterface:
+
+    def __init__(self, keyword: str):
+        self.__filename = f"{keyword.title().strip()}.json"
+
+    def create_json_array(self, data: list) -> str | None:
+        if not os.path.isfile(self.__filename):
+            with open(self.__filename, 'w', encoding='utf-8') as file:
+                json.dump(data, file, indent=4, ensure_ascii=False)
+
         else:
-            self.__error_logs.append(self.__response.status_code)
-            print("Error: %s" % self.__response.status_code)
+            while True:
+                answer = input(f"Файл с именем {self.__filename} уже создан, перезаписать?\nВаш ответ(yes\\no): ").lower().strip()
+                if answer == 'yes':
+                    with open(self.__filename, 'w', encoding='utf-8') as file:
+                        json.dump(data, file, indent=4, ensure_ascii=False)
+                        print('Информация в файле была перезаписана')
+                    return
+                elif answer == 'no':
+                    print("Файл не перезаписан")
+                    return
+                else:
+                    print("Некорректный ввод. Введите 'yes' или 'no'.")
 
-    def generate_vacancy(self):
-        try:
-            return self.__vacancies_list
-        except AttributeError as e:
-            return e
-
-    @property
-    def error_logs(self):
-        return self.__error_logs
-
-
-class HHVacancyInterface:
-
-    def __init__(self, hh_instance: HeadHunterApi):
-        self.__hh_instance = hh_instance
-        self.__list_of_vacancies = []
-
-        self.__now = datetime.datetime.now()
-        self.__current_time = self.__now.strftime(f"%d.%m.%Y Время: %X")
-
-    def fill_vacancy_list(self):
-
-        try:
-            for i in self.__hh_instance.generate_vacancy():
-                if i['salary']['to'] is None:
-                    i['salary']['to'] = "Максимальный порог не указан"
-
-                if i['salary']['from'] is None:
-                    i['salary']['from'] = "Начальная з/п не указана"
-
-                self.__list_of_vacancies.append(f"ID вакансии: {i['id']}. "
-                                                f"Наименование вакансии: {i['name']}. "
-                                                f"Заработная плата: {i['salary']['from']} - {i['salary']['to']}. "
-                                                f"Месторасположение: {i['area']['name']}. "
-                                                f"Ссылка на вакансию: {i['alternate_url']}.")
-            self.__list_of_vacancies.append(f"Время формирования запроса: {self.__current_time}")
-
-        except TypeError as e:
-            self.__hh_instance.error_logs.append(e)
-            return e
-
-
-    @property
-    def show_vacancies(self):
-
-        if len(self.__list_of_vacancies) == 0 and len(self.__hh_instance.error_logs) == 0:
-            return 'Список вакансий пуст, чтобы заполнить его, воспользуйтесь методом "fill_vacancy_list"'
-
-        if len(self.__hh_instance.error_logs) != 0:
-            return f"{'Список задокументированных ошибок:'} {self.__hh_instance.error_logs}"
-
-        return '\n'.join([i for i in self.__list_of_vacancies])
-
-    @property
-    def list_of_vacancies(self):
-        if len(self.__list_of_vacancies) == 0:
-            return 'Список вакансий пуст, чтобы заполнить его, воспользуйтесь методом "fill_vacancy_list"'
-
-        return self.__list_of_vacancies[:-1]
-
-    @property
-    def dict_of_vacancies(self):
-
-        test = self.__list_of_vacancies[:-1]
-        result_data = []
-
-        if len(self.__list_of_vacancies) == 0:
-            return 'Список вакансий пуст, чтобы заполнить его, воспользуйтесь методом "fill_vacancy_list"'
-
-        for i in test:
-            vacancy_dict = {}
-            part_of_dict = i.split('. ')
-
-            for part in part_of_dict:
-                key_value = part.split(': ')
-                vacancy_dict[key_value[0]] = key_value[1]
-            result_data.append(vacancy_dict)
-
-        return result_data
-
-    def get_full_information_by_id(self, id: str | int):
-
+    def show_all_vacancies(self) -> str:
         result_info = []
 
-        if len(self.__list_of_vacancies) == 0:
-            return 'Список вакансий пуст, чтобы заполнить его, воспользуйтесь методом "fill_vacancy_list"'
+        with open(self.__filename, encoding='utf-8') as file:
+            vacancies = json.load(file)
 
-        for i in self.__hh_instance.generate_vacancy():
-
+        for i in vacancies:
             if i['salary']['to'] is None:
                 i['salary']['to'] = "Максимальный порог не указан"
 
             if i['salary']['from'] is None:
                 i['salary']['from'] = "Начальная з/п не указана"
 
-            if str(id) == i['id']:
-                if i['address'] is None:
+            result_info.append(f"ID вакансии: {i['id']}. "
+                               f"Наименование вакансии: {i['name']}. "
+                               f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}. "
+                               f"Ссылка на вакансию: {i['alternate_url']}.")
 
-                    result_info.append(f"Наименование вакансии: {i['name']}. "
+        return '\n'.join(result_info)
+
+    def get_full_information_by_id(self, id: str | int) -> str:
+        result_info = []
+
+        with open(self.__filename, encoding='utf-8') as file:
+            vacancies = json.load(file)
+
+            for i in vacancies:
+
+                if i['id'] == str(id):
+                    if i.get('address') is None:
+                        address_info = 'адрес не указан'
+                    else:
+                        address_info = f"{i['address']['city']} {i['address']['street']} {i['address']['building']}"
+
+                    result_info.append(f"Вакансия: {i['name']}. "
+                                       f"Наименование организации {i['employer']['name']}. "
+                                       f"Адрес офиса: {address_info}. "
+                                       f"Требования к кандидату: {i['snippet']['requirement']}. "
+                                       f"Основные задачи: {i['snippet']['responsibility']}. "
                                        f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}. "
-                                       f"Требования к кандидату: {i['snippet']['requirement']} "
-                                       f"Обязанности: {i['snippet']['responsibility']} "
                                        f"Ссылка на вакансию: {i['alternate_url']}.")
 
-                else:
-                    result_info.append(f"Наименование вакансии: {i['name']}. "
-                                       f"Заработная плата({i['salary']['currency']}): {i['salary']['to']} - {i['salary']['from']}. "
-                                       f"Адрес офиса: {i['address']['city']} {i['address']['street']} {i['address']['building']}. "
-                                       f"Требования к кандидату: {i['snippet']['requirement']} "
-                                       f"Обязанности: {i['snippet']['responsibility']} "
-                                       f"Ссылка на вакансию: {i['alternate_url']}.")
-
-        return result_info
+                    return '\n'.join(result_info)
+        return 'Вакансии по такому ID не найдено'

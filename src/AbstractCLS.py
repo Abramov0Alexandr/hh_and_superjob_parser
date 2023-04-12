@@ -1,9 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 
-class ParseCLS(ABC):
+class HeadHunterAPIAbstract(ABC):
 
-    @abstractmethod
-    def generate_vacancy(self):
+    def __get_request(self, search_vacancy: str, page: int) -> list:
         pass
 
+    def start_parse(self, keyword: str, pages=10) -> None:
+        pass
