@@ -10,12 +10,16 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
 
     __base_url = "https://api.hh.ru/vacancies?only_with_salary=true"
 
-    __slots__ = ['vacancies_list']
-
     def __init__(self):
         self.__vacancies_list = []
 
     def __get_request(self, search_vacancy: str, page: int) -> list:
+        """
+        Метод для финальной реализации парсинга,
+        в качестве аргументов принимаются ключевое слово и кол-во страниц для парсинга,
+        после передачи всех необходимых аргументов происходит парсинг,
+        метод скрыт и используется в качестве финального шага.
+        """
 
         params = {"text": search_vacancy,
                   "page": page,
@@ -24,6 +28,14 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
         return requests.get(self.__base_url, params=params).json()['items']
 
     def start_parse(self, keyword: str, pages=10) -> None:
+        """
+        Метод используется в качестве настройки метода 'get_request'.
+        В качестве аргумента метод принимает ключевое слово по поиску вакансии и количество страниц для парсинга.
+        В дальнейшем, метод вызывает внитри себя 'get_request' и передает эти аргументы ему
+        После получения всех данных, информация записывается в список 'vacancies_list'
+        В конце выводится краткая информация о процессе
+        """
+
         current_page = 0
         now = datetime.datetime.now()
         current_time = now.strftime(f"%d.%m.%Y Время: %X")
@@ -40,6 +52,8 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
 
     @property
     def get_vacancies_list(self):
+        """Метод для вывода или использования сырых собранных данных"""
+
         return self.__vacancies_list
 
 
@@ -49,6 +63,12 @@ class HeadHunterVacancyInterface:
         self.__filename = f"{keyword.title().strip()}.json"
 
     def create_json_array(self, data: list) -> str | None:
+        """
+        Метод для записи полученных в процессе парсинга данных в файл формата JSON.
+        Также происходит дополнительная проверка, существует ли файл с таким же именем.
+        В случае, если файл уже существует есть возможность перезаписать данные или оставить их.
+        """
+
         if not os.path.isfile(self.__filename):
             with open(self.__filename, 'w', encoding='utf-8') as file:
                 json.dump(data, file, indent=4, ensure_ascii=False)
@@ -68,6 +88,8 @@ class HeadHunterVacancyInterface:
                     print("Некорректный ввод. Введите 'yes' или 'no'.")
 
     def show_all_vacancies(self) -> str:
+        """Метод для вывода краткой информации о всех собранных вакансиях"""
+
         result_info = []
 
         with open(self.__filename, encoding='utf-8') as file:
@@ -86,6 +108,8 @@ class HeadHunterVacancyInterface:
         return '\n'.join(result_info)
 
     def get_full_information_by_id(self, id: str | int) -> str:
+        """Метод для вывода более подробной информации о вакансии по ее ID"""
+
         result_info = []
 
         with open(self.__filename, encoding='utf-8') as file:
@@ -109,12 +133,3 @@ class HeadHunterVacancyInterface:
 
                     return '\n'.join(result_info)
         return 'Вакансии по такому ID не найдено'
-
-
-hh_api = HeadHunterAPI()
-hh_api.start_parse('python', 1)
-vac = hh_api.get_vacancies_list
-hh_vacancy = HeadHunterVacancyInterface('test')
-# hh_vacancy.create_json_array(vac)
-# print(hh_vacancy.show_all_vacancies())
-print(hh_vacancy.get_full_information_by_id(75845620))
