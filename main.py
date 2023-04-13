@@ -5,7 +5,8 @@ if __name__ == '__main__':
 
     available_commands = {1: "Показать сформированную краткую информацию о всех вакансиях",
                           2: "Получить расширенную информацию о вакансии по id",
-                          3: "Завершение программы и выход"}
+                          3: "Показать топ 10 вакансий по средней заработной плате",
+                          4: "Завершение программы и выход"}
 
     pretty_view_commands = '\n'.join([f"{key}: {value}" for key, value in available_commands.items()])
 
@@ -40,7 +41,7 @@ if __name__ == '__main__':
 
         user_command = input("\nОжидание номера команды: ").title().strip()
 
-        while user_command != '3':
+        while user_command != '4':
 
             if user_command == 'Помощь':
                 print(pretty_view_commands)
@@ -55,7 +56,10 @@ if __name__ == '__main__':
 
                 print(vacancy_interface.get_full_information_by_id(search_id))
 
-            elif user_command not in ('1', '2', 'Помощь'):
+            if user_command == "3":
+                print(vacancy_interface.top_ten_by_avg_salary())
+
+            elif user_command not in ('1', '2', '3', 'Помощь'):
                 print('Команда не найдена, пожалуйста, повторите ввод')
 
             user_command = input("\nОжидание номера команды: ").title().strip()
