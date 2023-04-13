@@ -70,16 +70,15 @@ class HeadHunterVacancyInterface:
         """
 
         if not os.path.isfile(self.__filename):
-            with open(self.__filename, 'w', encoding='utf-8') as file:
-                json.dump(data, file, indent=4, ensure_ascii=False)
+            self.__write_to_json_file(data)
 
         else:
             while True:
-                answer = input(f"Файл с именем {self.__filename} уже создан, перезаписать?\nВаш ответ(yes\\no): ").lower().strip()
+                answer = input(f"Файл с именем {self.__filename} уже создан, перезаписать?"
+                               f"\nВаш ответ(yes\\no): ").lower().strip()
                 if answer == 'yes':
-                    with open(self.__filename, 'w', encoding='utf-8') as file:
-                        json.dump(data, file, indent=4, ensure_ascii=False)
-                        print('Информация в файле была перезаписана')
+                    self.__write_to_json_file(data)
+                    print('Информация в файле была перезаписана')
                     return
                 elif answer == 'no':
                     print("Файл не перезаписан")
@@ -92,10 +91,7 @@ class HeadHunterVacancyInterface:
 
         result_info = []
 
-        with open(self.__filename, encoding='utf-8') as file:
-            vacancies = json.load(file)
-
-        for i in vacancies:
+        for i in self.__data_from_json_file:
 
             salary_from = 'Начальная плата не указана' if not i['salary'].get('from') else i['salary'].get('from')
             salary_to = 'Максимальный порог не указан' if not i['salary'].get('to') else i['salary'].get('to')
@@ -112,24 +108,40 @@ class HeadHunterVacancyInterface:
 
         result_info = []
 
+        for i in self.__data_from_json_file:
+
+            if i['id'] == str(id):
+                if i.get('address') is None:
+                    address_info = 'адрес не указан'
+                else:
+                    address_info = f"{i['address']['city']} {i['address']['street']} {i['address']['building']}"
+
+                result_info.append(f"\nВакансия: {i['name']}.\n"
+                                   f"Наименование организации {i['employer']['name']}.\n"
+                                   f"Адрес офиса: {address_info}.\n"
+                                   f"Требования к кандидату: {i['snippet']['requirement']}.\n"
+                                   f"Основные задачи: {i['snippet']['responsibility']}.\n"
+                                   f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}.\n"
+                                   f"Ссылка на вакансию: {i['alternate_url']}.")
+
+                return ''.join(result_info)
+        return 'Вакансии по такому ID не найдено'
+
+    def __write_to_json_file(self, data):
+        """
+        Метод для записи переданных в качестве аргумента данных в формат JSON.
+        Метод служит для облегчения интерфейса класса
+        :param data: Данные для записи
+        """
+        with open(self.__filename, 'w', encoding='utf-8') as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)
+
+    @property
+    def __data_from_json_file(self):
+        """
+        Метод для получения данных из записанного JSON файла.
+        Метод служит для облегчения интерфейса класса
+        """
         with open(self.__filename, encoding='utf-8') as file:
             vacancies = json.load(file)
-
-            for i in vacancies:
-
-                if i['id'] == str(id):
-                    if i.get('address') is None:
-                        address_info = 'адрес не указан'
-                    else:
-                        address_info = f"{i['address']['city']} {i['address']['street']} {i['address']['building']}"
-
-                    result_info.append(f"\nВакансия: {i['name']}.\n"
-                                       f"Наименование организации {i['employer']['name']}.\n"
-                                       f"Адрес офиса: {address_info}.\n"
-                                       f"Требования к кандидату: {i['snippet']['requirement']}.\n"
-                                       f"Основные задачи: {i['snippet']['responsibility']}.\n"
-                                       f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}.\n"
-                                       f"Ссылка на вакансию: {i['alternate_url']}.")
-
-                    return ''.join(result_info)
-        return 'Вакансии по такому ID не найдено'
+            return vacancies
