@@ -145,7 +145,6 @@ class HeadHunterVacancyInterface:
                                      "Средняя заработная плата": salary_avg,
                                      "Ссылка на вакансию": {i['alternate_url']}})
         sorted_data = sorted(leaders_list, key=itemgetter("Средняя заработная плата"), reverse=True)
-        # return sorted_data[:10]
         pprint.pprint(sorted_data[:10], width=110)
 
     def __write_to_json_file(self, data):
