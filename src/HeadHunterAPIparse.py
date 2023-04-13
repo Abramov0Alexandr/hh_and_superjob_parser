@@ -132,6 +132,10 @@ class HeadHunterVacancyInterface:
         return 'Вакансии по такому ID не найдено'
 
     def top_ten_by_avg_salary(self):
+        """
+        Метод для вывода информации о топ 10 вакансиях по заработной плате.
+        Метод выводит только те вакансии, в которых заработная плата указана в рублях
+        """
         leaders_list = []
 
         for i in self.__data_from_json_file:
