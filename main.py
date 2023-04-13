@@ -14,12 +14,11 @@ if __name__ == '__main__':
         print('Приветствую, данная программа предназначена для парсинга вакансий HeadHunter\n')
 
         search_vacancy = input('Введите вакансию, по которой вы хотите произвести поиск: ').title().strip()
-        while not search_vacancy.isalpha():
+        while not search_vacancy.replace(' ', '').isalpha():
             search_vacancy = input('Название вакансии должно быть строкового типа: ')
 
         pages_for_search = input('Введите количество страниц с которых необходимо произвести парсинг.\n'
                                  'По умолчанию значение установлено на 10 и является максимальным: ').strip()
-
         print()
 
         while pages_for_search > '10' or pages_for_search.isalpha() or pages_for_search in '':
@@ -39,7 +38,7 @@ if __name__ == '__main__':
         print("Чтобы вызвать команду, введите ее номер.\n"
               "Также с помощью команды 'Помощь' можно получить список доступных к вызову команд.")
 
-        user_command = input("Ожидание номера команды: ").title().strip()
+        user_command = input("\nОжидание номера команды: ").title().strip()
 
         while user_command != '3':
 
@@ -59,7 +58,7 @@ if __name__ == '__main__':
             elif user_command not in ('1', '2', 'Помощь'):
                 print('Команда не найдена, пожалуйста, повторите ввод')
 
-            user_command = input("Ожидание номера команды: ").title().strip()
+            user_command = input("\nОжидание номера команды: ").title().strip()
 
         print(f"Работа успешно завершена, файл {filename.title()}.json находится в основной директории.\n"
               f"До свидания!")

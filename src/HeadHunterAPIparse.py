@@ -123,13 +123,13 @@ class HeadHunterVacancyInterface:
                     else:
                         address_info = f"{i['address']['city']} {i['address']['street']} {i['address']['building']}"
 
-                    result_info.append(f"Вакансия: {i['name']}. "
-                                       f"Наименование организации {i['employer']['name']}. "
-                                       f"Адрес офиса: {address_info}. "
-                                       f"Требования к кандидату: {i['snippet']['requirement']}. "
-                                       f"Основные задачи: {i['snippet']['responsibility']}. "
-                                       f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}. "
+                    result_info.append(f"\nВакансия: {i['name']}.\n"
+                                       f"Наименование организации {i['employer']['name']}.\n"
+                                       f"Адрес офиса: {address_info}.\n"
+                                       f"Требования к кандидату: {i['snippet']['requirement']}.\n"
+                                       f"Основные задачи: {i['snippet']['responsibility']}.\n"
+                                       f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}.\n"
                                        f"Ссылка на вакансию: {i['alternate_url']}.")
 
-                    return '\n'.join(result_info)
+                    return ''.join(result_info)
         return 'Вакансии по такому ID не найдено'
