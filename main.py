@@ -57,6 +57,8 @@ if __name__ == '__main__':
                 print(vacancy_interface.get_full_information_by_id(search_id))
 
             if user_command == "3":
+                print('Ниже представлена информация о топ 10 вакансиях по заработной плате.\n'
+                      'ВНИМАНИЕ, топ лист состоит из вакансий, в которых зарплата указана в РУБЛЯХ\n')
                 vacancy_interface.top_ten_by_avg_salary()
 
             elif user_command not in ('1', '2', '3', 'Помощь'):
