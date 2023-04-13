@@ -1,5 +1,6 @@
 import json
 import os
+from operator import itemgetter
 import requests
 import datetime
 
@@ -31,7 +32,7 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
         """
         Метод используется в качестве настройки метода 'get_request'.
         В качестве аргумента метод принимает ключевое слово по поиску вакансии и количество страниц для парсинга.
-        В дальнейшем, метод вызывает внитри себя 'get_request' и передает эти аргументы ему
+        В дальнейшем, метод вызывает внутри себя 'get_request' и передает эти аргументы ему
         После получения всех данных, информация записывается в список 'vacancies_list'
         В конце выводится краткая информация о процессе
         """
@@ -58,6 +59,8 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
 
 
 class HeadHunterVacancyInterface:
+    """При создании экземпляра класса, необходимо передать слово, которое будет
+    являться названием JSON файла при записи полученной информации"""
 
     def __init__(self, keyword: str):
         self.__filename = f"{keyword.title().strip()}.json"
@@ -126,6 +129,22 @@ class HeadHunterVacancyInterface:
 
                 return ''.join(result_info)
         return 'Вакансии по такому ID не найдено'
+
+    def top_ten_by_avg_salary(self):
+        leaders_list = []
+
+        for i in self.__data_from_json_file:
+            if i['salary']['from'] is None or i['salary']['to'] is None or i['salary']['currency'] != 'RUR':
+                continue
+
+            else:
+                salary_avg = (i['salary']['from'] + i['salary']['to']) / 2
+                leaders_list.append({"ID вакансии": i['id'],
+                                     "Наименование вакансии": i['name'],
+                                     "Средняя заработная плата": salary_avg,
+                                     "Ссылка на вакансию": {i['alternate_url']}})
+        sorted_data = sorted(leaders_list, key=itemgetter("Средняя заработная плата"), reverse=True)
+        return sorted_data[:10]
 
     def __write_to_json_file(self, data):
         """
