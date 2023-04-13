@@ -57,7 +57,7 @@ if __name__ == '__main__':
                 print(vacancy_interface.get_full_information_by_id(search_id))
 
             if user_command == "3":
-                print(vacancy_interface.top_ten_by_avg_salary())
+                vacancy_interface.top_ten_by_avg_salary()
 
             elif user_command not in ('1', '2', '3', 'Помощь'):
                 print('Команда не найдена, пожалуйста, повторите ввод')
