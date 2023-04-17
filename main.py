@@ -1,6 +1,6 @@
 from src.HeadHunterAPIparse import HeadHunterAPI, HeadHunterVacancyInterface
 from src.SuperJobAPI import SuperJobVacancyInterface, SuperJobParser
-from src.user_interface_foos import sj_conversation
+# from src.user_interface_foos import sj_conversation
 
 if __name__ == '__main__':
     hh_instance = HeadHunterAPI()
@@ -24,8 +24,8 @@ if __name__ == '__main__':
                                  'По умолчанию значение установлено на 10 и является максимальным: ').strip()
         print()
 
-        while pages_for_search > '10' or pages_for_search.isalpha() or pages_for_search in '':
-            pages_for_search = input("Введено некорректное значение, повторите попытку: ").strip()
+        while not pages_for_search.isdigit() or int(pages_for_search) > 10:
+            pages_for_search = input('Некорректное значение, повторите ввод: ').strip()
 
         hh_instance.start_parse(search_vacancy, int(pages_for_search))
         result_info = hh_instance.get_vacancies_list
