@@ -5,17 +5,17 @@ from operator import itemgetter
 import requests
 import datetime
 
-from src.AbstractCLS import HeadHunterAPIAbstract
+from src.AbstractCLS import AbstractAPIClass
 
 
-class HeadHunterAPI(HeadHunterAPIAbstract):
+class HeadHunterAPI(AbstractAPIClass):
 
     __base_url = "https://api.hh.ru/vacancies?only_with_salary=true"
 
     def __init__(self):
         self.__vacancies_list = []
 
-    def __get_request(self, search_vacancy: str, page: int) -> list:
+    def __get_request(self, vacancy_for_search: str, pages_for_parse: int) -> list:
         """
         Метод для финальной реализации парсинга,
         в качестве аргументов принимаются ключевое слово и кол-во страниц для парсинга,
@@ -23,13 +23,13 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
         метод скрыт и используется в качестве финального шага.
         """
 
-        params = {"text": search_vacancy,
-                  "page": page,
+        params = {"text": vacancy_for_search,
+                  "page": pages_for_parse,
                   "per_page": 100
                   }
         return requests.get(self.__base_url, params=params).json()['items']
 
-    def start_parse(self, keyword: str, pages=10) -> None:
+    def start_parse(self, vacancy_for_search: str, pages_for_parse=10) -> None:
         """
         Метод используется в качестве настройки метода 'get_request'.
         В качестве аргумента метод принимает ключевое слово по поиску вакансии и количество страниц для парсинга.
@@ -42,10 +42,10 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
         now = datetime.datetime.now()
         current_time = now.strftime(f"%d.%m.%Y Время: %X")
 
-        for i in range(pages):
+        for i in range(pages_for_parse):
             current_page += 1
             print(f"Парсинг страницы {i + 1}", end=': ')
-            values = self.__get_request(keyword, i)
+            values = self.__get_request(vacancy_for_search, i)
             print(f"Найдено {len(values)} вакансий")
             self.__vacancies_list.extend(values)
 
