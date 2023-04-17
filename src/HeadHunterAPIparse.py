@@ -1,12 +1,14 @@
 import json
 import os
+import pprint
+from operator import itemgetter
 import requests
 import datetime
 
-from src.AbstractCLS import HeadHunterAPIAbstract
+from src.AbstractCLS import AbstractAPIClass
 
 
-class HeadHunterAPI(HeadHunterAPIAbstract):
+class HeadHunterAPI(AbstractAPIClass):
 
     __base_url = "https://api.hh.ru/vacancies?only_with_salary=true"
 
@@ -31,7 +33,7 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
         """
         Метод используется в качестве настройки метода 'get_request'.
         В качестве аргумента метод принимает ключевое слово по поиску вакансии и количество страниц для парсинга.
-        В дальнейшем, метод вызывает внитри себя 'get_request' и передает эти аргументы ему
+        В дальнейшем, метод вызывает внутри себя 'get_request' и передает эти аргументы ему
         После получения всех данных, информация записывается в список 'vacancies_list'
         В конце выводится краткая информация о процессе
         """
@@ -58,6 +60,8 @@ class HeadHunterAPI(HeadHunterAPIAbstract):
 
 
 class HeadHunterVacancyInterface:
+    """При создании экземпляра класса, необходимо передать слово, которое будет
+    являться названием JSON файла при записи полученной информации"""
 
     def __init__(self, keyword: str):
         self.__filename = f"{keyword.title().strip()}.json"
@@ -70,16 +74,15 @@ class HeadHunterVacancyInterface:
         """
 
         if not os.path.isfile(self.__filename):
-            with open(self.__filename, 'w', encoding='utf-8') as file:
-                json.dump(data, file, indent=4, ensure_ascii=False)
+            self.__write_to_json_file(data)
 
         else:
             while True:
-                answer = input(f"Файл с именем {self.__filename} уже создан, перезаписать?\nВаш ответ(yes\\no): ").lower().strip()
+                answer = input(f"Файл с именем {self.__filename} уже создан, перезаписать?"
+                               f"\nВаш ответ(yes\\no): ").lower().strip()
                 if answer == 'yes':
-                    with open(self.__filename, 'w', encoding='utf-8') as file:
-                        json.dump(data, file, indent=4, ensure_ascii=False)
-                        print('Информация в файле была перезаписана')
+                    self.__write_to_json_file(data)
+                    print('Информация в файле была перезаписана')
                     return
                 elif answer == 'no':
                     print("Файл не перезаписан")
@@ -92,10 +95,7 @@ class HeadHunterVacancyInterface:
 
         result_info = []
 
-        with open(self.__filename, encoding='utf-8') as file:
-            vacancies = json.load(file)
-
-        for i in vacancies:
+        for i in self.__data_from_json_file:
 
             salary_from = 'Начальная плата не указана' if not i['salary'].get('from') else i['salary'].get('from')
             salary_to = 'Максимальный порог не указан' if not i['salary'].get('to') else i['salary'].get('to')
@@ -112,24 +112,68 @@ class HeadHunterVacancyInterface:
 
         result_info = []
 
+        for i in self.__data_from_json_file:
+
+            if i['id'] == str(id):
+                if i.get('address') is None:
+                    address_info = 'адрес не указан'
+                else:
+                    address_info = f"{i['address']['city']} {i['address']['street']} {i['address']['building']}"
+
+                result_info.append(f"\nВакансия: {i['name']}.\n"
+                                   f"Наименование организации {i['employer']['name']}.\n"
+                                   f"Адрес офиса: {address_info}.\n"
+                                   f"Требования к кандидату: {i['snippet']['requirement']}.\n"
+                                   f"Основные задачи: {i['snippet']['responsibility']}.\n"
+                                   f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}.\n"
+                                   f"Ссылка на вакансию: {i['alternate_url']}.")
+
+                return ''.join(result_info)
+        return 'Вакансии по такому ID не найдено'
+
+    def top_ten_by_avg_salary(self):
+        """
+        Метод для вывода информации о топ 10 вакансиях по заработной плате.
+        Метод выводит только те вакансии, в которых заработная плата указана в рублях
+        """
+        leaders_list = []
+
+        for i in self.__data_from_json_file:
+            if i['salary']['from'] is None or i['salary']['to'] is None or i['salary']['currency'] != 'RUR':
+                continue
+
+            else:
+                salary_avg = (i['salary']['from'] + i['salary']['to']) / 2
+                leaders_list.append({"ID вакансии": i['id'],
+                                     "Наименование вакансии": i['name'],
+                                     "Средняя заработная плата": salary_avg,
+                                     "Ссылка на вакансию": {i['alternate_url']}})
+        sorted_data = sorted(leaders_list, key=itemgetter("Средняя заработная плата"), reverse=True)
+        pprint.pprint(sorted_data[:10], width=110)
+
+    def __write_to_json_file(self, data):
+        """
+        Метод для записи переданных в качестве аргумента данных в формат JSON.
+        Метод служит для облегчения интерфейса класса
+        :param data: Данные для записи
+        """
+        with open(self.__filename, 'w', encoding='utf-8') as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)
+
+    @property
+    def __data_from_json_file(self):
+        """
+        Метод для получения данных из записанного JSON файла.
+        Метод служит для облегчения интерфейса класса
+        """
         with open(self.__filename, encoding='utf-8') as file:
             vacancies = json.load(file)
+            return vacancies
 
-            for i in vacancies:
 
-                if i['id'] == str(id):
-                    if i.get('address') is None:
-                        address_info = 'адрес не указан'
-                    else:
-                        address_info = f"{i['address']['city']} {i['address']['street']} {i['address']['building']}"
-
-                    result_info.append(f"Вакансия: {i['name']}. "
-                                       f"Наименование организации {i['employer']['name']}. "
-                                       f"Адрес офиса: {address_info}. "
-                                       f"Требования к кандидату: {i['snippet']['requirement']}. "
-                                       f"Основные задачи: {i['snippet']['responsibility']}. "
-                                       f"Заработная плата({i['salary']['currency']}): {i['salary']['from']} - {i['salary']['to']}. "
-                                       f"Ссылка на вакансию: {i['alternate_url']}.")
-
-                    return '\n'.join(result_info)
-        return 'Вакансии по такому ID не найдено'
+hh_api = HeadHunterAPI()
+hh_api.start_parse('python', 1)
+data = hh_api.get_vacancies_list
+hh_interface = HeadHunterVacancyInterface('test')
+hh_interface.create_json_array(data)
+# hh_interface.top_ten_by_avg_salary()
