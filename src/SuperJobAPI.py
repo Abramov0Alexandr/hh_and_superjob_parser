@@ -5,8 +5,6 @@ import datetime
 from operator import itemgetter
 import requests
 
-from src.AbstractCLS import AbstractAPIClass
-
 
 class SuperJobParser:
 
@@ -17,6 +15,12 @@ class SuperJobParser:
         self.__vacancies_list = []
 
     def __get_request(self, vacancy_for_search: str, preferred_city: str, pages_for_parse=1) -> list:
+        """
+        Метод для финальной реализации парсинга,
+        в качестве аргументов принимаются ключевое слово и кол-во страниц для парсинга,
+        после передачи всех необходимых аргументов происходит парсинг,
+        метод скрыт и используется в качестве финального шага.
+        """
 
         header = {
             'X-Api-App-Id': 'v3.r.137491480.efc206e4525fb50a0bc91e6c0ecff6cec64b1fdb.20452df5d70be14cfb657a43773b962c328135b5'
@@ -24,13 +28,21 @@ class SuperJobParser:
 
         params = {'keywords': vacancy_for_search.title(),
                   'town': preferred_city,
-                  'count': 10,
+                  'count': 100,
                   'page': pages_for_parse,
                   'more': True}
 
         return requests.get(self.URL, headers=header, params=params).json()['objects']
 
-    def start_parse(self, vacancy_for_search: str, preferred_city: str, pages_for_parse=2) -> None:
+    def start_parse(self, vacancy_for_search: str, preferred_city: str, pages_for_parse=10) -> None:
+        """
+        Метод используется в качестве настройки метода 'get_request'.
+        В качестве аргумента метод принимает ключевое слово по поиску вакансии и количество страниц для парсинга.
+        В дальнейшем, метод вызывает внутри себя 'get_request' и передает эти аргументы ему
+        После получения всех данных, информация записывается в список 'vacancies_list'
+        В конце выводится краткая информация о процессе
+        """
+
         current_page = 0
 
         for i in range(pages_for_parse):
@@ -42,6 +54,8 @@ class SuperJobParser:
 
     @property
     def get_vacancies_list(self) -> list:
+        """Метод для вывода или использования сырых собранных данных"""
+
         return self.__vacancies_list
 
 
@@ -153,16 +167,3 @@ class SuperJobVacancyInterface:
         with open(self.__file_title, encoding='utf-8') as file:
             vacancies = json.load(file)
             return vacancies
-
-
-
-sj = SuperJobParser()
-# sj.start_parse('python', 'Москва', pages_for_parse=1)
-# sj_vacancies = sj.get_vacancies
-
-sj_interface = SuperJobVacancyInterface('test')
-# sj_interface.create_json_array(sj_vacancies)
-# print(sj_interface.show_all_vacancies())
-# print(sj_interface.get_full_information_by_id('46109046'))
-# sj_interface.top_ten_by_avg_salary()
-
